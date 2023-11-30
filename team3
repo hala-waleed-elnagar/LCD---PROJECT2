@@ -6,18 +6,18 @@
 
 #define _BV(bit)  (1<<bit)
 #define BV(bit)  (1<<bit)
-#define bit_is_set(sfr, bit) (_SFR_BYTE(sfr) & _BV(bit))
-#define bit_is_clear(sfr, bit) (!(_SFR_BYTE(sfr) & _BV(bit)))
-#define loop_until_bit_is_set(sfr, bit) do { } while (bit_is_clear(sfr, bit))
-#define loop_until_bit_is_clear(sfr, bit) do { } while (bit_is_set(sfr, bit))
+#define bit_is_set(ts, bit) (_TS_BYTE(ts) & _B(bit))
+#define bit_is_clear(ts, bit) (!(_TS_BYTE(ts) & _B(bit)))
+#define loop_until_bit_is_set(ts, bit) do { } while (bit_is_clear(ts, bit))
+#define loop_until_bit_is_clear(ts, bit) do { } while (bit_is_set(ts, bit))
 
-#define setBit(sfr, bit)     (_SFR_BYTE(sfr) |= (1 << bit))
-#define clearBit(sfr, bit)   (_SFR_BYTE(sfr) &= ~(1 << bit))
-#define toggleBit(sfr, bit)  (_SFR_BYTE(sfr) ^= (1 << bit))
+#define setBit(ts, bit)     (_TS_BYTE(ts) |= (1 << bit))
+#define clearBit(ts, bit)   (_TS_BYTE(ts) &= ~(1 << bit))
+#define toggleBit(ts, bit)  (_TS_BYTE(ts) ^= (1 << bit))
 
-#define Dio_SetPinDirection(sfr, bit, direction) ((direction==1) ? (setBit(sfr, bit)) : (clearBit(sfr, bit)))
-#define Dio_SetPinState(sfr, bit, state) ((state==1) ? (setBit(sfr, bit)) : (clearBit(sfr, bit)))
-#define Dio_GetPinState(sfr, bit)  (bit_is_set(sfr, bit))
+#define Dio_SetPinDirection(ts, bit, direction) ((direction==1) ? (setBit(ts, bit)) : (clearBit(ts, bit)))
+#define Dio_SetPinState(ts, bit, state) ((state==1) ? (setBit(ts, bit)) : (clearBit(ts, bit)))
+#define Dio_GetPinState(ts, bit)  (bit_is_set(ts, bit))
 
 #define LOWER_LED PB3
 #define LOWER_LED_DDR DDRB
