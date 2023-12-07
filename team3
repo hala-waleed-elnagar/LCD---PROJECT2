@@ -6,10 +6,10 @@
 
 #define _BV(bit)  (1<<bit)
 #define BV(bit)  (1<<bit)
-#define bit_is_set(ts, bit) (_TS_BYTE(ts) & _B(bit))
-#define bit_is_clear(ts, bit) (!(_TS_BYTE(ts) & _B(bit)))
+#define bit_is_set(ts, bit) (_TS_BYTE(sfr) & _BV(bit))
+#define bit_is_clear(ts, bit) (!(_TS_BYTE(sfr) & _BV(bit)))
 #define loop_until_bit_is_set(ts, bit) do { } while (bit_is_clear(ts, bit))
-#define loop_until_bit_is_clear(ts, bit) do { } while (bit_is_set(ts, bit))
+#define loop_until_bit_is_clear(sTS, bit) do { } while (bit_is_set(ts, bit))
 
 #define setBit(ts, bit)     (_TS_BYTE(ts) |= (1 << bit))
 #define clearBit(ts, bit)   (_TS_BYTE(ts) &= ~(1 << bit))
@@ -33,6 +33,38 @@
 #define BUTTON_CH 0
 #define BUTTON_DDR DDRC
 
+{
+    static void Main()
+    {
+        Console.WriteLine("LT:"); // Set up the LCD
+
+        char key;
+        while (true)
+        {
+            key = Console.ReadKey().KeyChar;
+
+            if (key != '\0')
+            {
+                Console.SetCursorPosition(3, 0);
+                Console.Write(key);
+                Console.WriteLine(key);
+            }
+
+            Console.SetCursorPosition(4, 0);
+            Console.Write(" to HT:20");
+
+            Console.SetCursorPosition(0, 1);
+            Console.Write("Temp:");
+
+            if (Console.KeyAvailable)
+            {
+                int h = Console.Read();
+                float hh = h * 25.00 / 255.0;
+                Console.Write(hh);
+            }
+        }
+    }
+}
 void init();
 
 /* upper and lower temperature thresholds values*/
@@ -119,6 +151,91 @@ void init() {
   LCD_String_xy(1, 0, "Range: ");
   LCD_String_xy(1, 8, " - ");
   LCD_String_xy(1, 13, "C");
+ {
+    const int fanPin = 3;
+    const int HTLedPin = 6;  // High Temperature Led
+    const int LTLedPin = 5;
+    const int heaterPin = 4;
+    const int sensorPin = 0; // Analog input A0
+    const int motorPin1 = 7;
+    const int motorPin2 = 8;
+
+    static int highTemp = 20;
+    static int lowTemp = 9;
+
+    static void Main()
+    {
+        Console.WriteLine("Simulating Arduino Code in C#");
+
+        while (true)
+        {
+            int sensorVal = SimulateAnalogRead();
+            byte outputValue = (byte)Map(sensorVal, 0, 1023, 0, 255);
+
+            float sensorVolt = sensorVal * 4.99f / 1024;
+            float tempSensor = sensorVolt * 25.0f / 5.0f;
+
+            Console.WriteLine($"Sensor Value: {outputValue}");
+
+            if (Console.KeyAvailable)
+            {
+                byte g = (byte)Console.Read();
+            }
+
+            if (tempSensor >= highTemp)
+            {
+                SimulateDigitalWrite(fanPin, 1);
+                SimulateAnalogWrite(HTLedPin, (sensorVal - 720) / 10);
+                SimulateAnalogWrite(heaterPin, 0);
+                SimulateAnalogWrite(LTLedPin, 0);
+                SimulateDigitalWrite(motorPin1, 1);
+                SimulateDigitalWrite(motorPin2, 0);
+            }
+            else if (tempSensor >= lowTemp)
+            {
+                SimulateDigitalWrite(fanPin, 0);
+                SimulateAnalogWrite(HTLedPin, 0);
+                SimulateAnalogWrite(heaterPin, 0);
+                SimulateAnalogWrite(LTLedPin, sensorVal / 4);
+                SimulateDigitalWrite(motorPin1, 0);
+                SimulateDigitalWrite(motorPin2, 1);
+            }
+            else
+            {
+                SimulateDigitalWrite(fanPin, 0);
+                SimulateAnalogWrite(HTLedPin, 0);
+                SimulateAnalogWrite(heaterPin, 255);
+                SimulateAnalogWrite(LTLedPin, 0);
+                SimulateDigitalWrite(motorPin1, 0);
+                SimulateDigitalWrite(motorPin2, 0);
+            }
+
+            Thread.Sleep(1000); // Simulating delay(1000)
+        }
+    }
+
+    static int SimulateAnalogRead()
+    {
+        // Simulate analogRead() functionality
+        Random random = new Random();
+        return random.Next(0, 1024);
+    }
+
+    static void SimulateDigitalWrite(int pin, int value)
+    {
+        Console.WriteLine($"DigitalWrite Pin {pin}, Value {value}");
+        // Simulate digitalWrite() functionality
+    }
+
+    static void SimulateAnalogWrite(int pin, int value)
+    {
+        Console.WriteLine($"AnalogWrite Pin {pin}, Value {value}");
+        // Simulate analogWrite() functionality
+    }
+
+    static int Map(int value, int fromLow, int fromHigh, int toLow, int toHigh)
+    {
+        return (value - fromLow) * (toHigh - toLow) / (fromHigh - fromLow) + toLow; 
 
   ADC_Init();
     Dio_SetPinDirection(BUTTON_DDR, BUTTON_CH, 0);
