@@ -3,13 +3,24 @@
 #include "ADC.h"
 #include "LCD.h"
 #include "pwm.h"
+#include "common_macros.h"
 
+
+
+
+#define fanpin     3 //pin 3 in PORTD
+#define HTLedPin   6 //PIN 6 IN PORTD
+#define LTLedPin   11 //pin 3 in PORTB
+#define heaterPin  4 //pin 4 in PORTD
+#define sensorPin  0 //pin 0 in PORTC
+#define motorPin1  7 //pin 7 in PORTD
+#define motorPin2  0 //PIN0 IN PORTB 
 #define _BV(bit)  (1<<bit)
 #define BV(bit)  (1<<bit)
-#define bit_is_set(ts, bit) (_TS_BYTE(sfr) & _BV(bit))
-#define bit_is_clear(ts, bit) (!(_TS_BYTE(sfr) & _BV(bit)))
+#define bit_is_set(ts, bit) (_TS_BYTE(ts) & _BV(bit))
+#define bit_is_clear(ts, bit) (!(_TS_BYTE(ts) & _BV(bit)))
 #define loop_until_bit_is_set(ts, bit) do { } while (bit_is_clear(ts, bit))
-#define loop_until_bit_is_clear(sTS, bit) do { } while (bit_is_set(ts, bit))
+#define loop_until_bit_is_clear(ts, bit) do { } while (bit_is_set(ts, bit))
 
 #define setBit(ts, bit)     (_TS_BYTE(ts) |= (1 << bit))
 #define clearBit(ts, bit)   (_TS_BYTE(ts) &= ~(1 << bit))
@@ -33,45 +44,13 @@
 #define BUTTON_CH 0
 #define BUTTON_DDR DDRC
 
-{
-    static void Main()
-    {
-        Console.WriteLine("LT:"); // Set up the LCD
-
-        char key;
-        while (true)
-        {
-            key = Console.ReadKey().KeyChar;
-
-            if (key != '\0')
-            {
-                Console.SetCursorPosition(3, 0);
-                Console.Write(key);
-                Console.WriteLine(key);
-            }
-
-            Console.SetCursorPosition(4, 0);
-            Console.Write(" to HT:20");
-
-            Console.SetCursorPosition(0, 1);
-            Console.Write("Temp:");
-
-            if (Console.KeyAvailable)
-            {
-                int h = Console.Read();
-                float hh = h * 25.00 / 255.0;
-                Console.Write(hh);
-            }
-        }
-    }
-}
 void init();
 
 /* upper and lower temperature thresholds values*/
 int lower =10;
 int upper =15;
 
-/* temperatures readings from DH11*/
+/* temperatures readings from temperature sensor*/
 int last_temperature = 0;
 int temperatue = 0;
 
@@ -146,96 +125,11 @@ int main(void) {
 
 void init() {
   LCD_Init();
-  LCD_String_xy(0, 0, "T: ");
-  LCD_String_xy(0, 5, " C");
-  LCD_String_xy(1, 0, "Range: ");
+  LCD_String_xy(0, 0, "LT:9 to ");
+  LCD_String_xy(0, 5, " HT:20");
+  LCD_String_xy(1, 0, "Temp: ");
   LCD_String_xy(1, 8, " - ");
   LCD_String_xy(1, 13, "C");
- {
-    const int fanPin = 3;
-    const int HTLedPin = 6;  // High Temperature Led
-    const int LTLedPin = 5;
-    const int heaterPin = 4;
-    const int sensorPin = 0; // Analog input A0
-    const int motorPin1 = 7;
-    const int motorPin2 = 8;
-
-    static int highTemp = 20;
-    static int lowTemp = 9;
-
-    static void Main()
-    {
-        Console.WriteLine("Simulating Arduino Code in C#");
-
-        while (true)
-        {
-            int sensorVal = SimulateAnalogRead();
-            byte outputValue = (byte)Map(sensorVal, 0, 1023, 0, 255);
-
-            float sensorVolt = sensorVal * 4.99f / 1024;
-            float tempSensor = sensorVolt * 25.0f / 5.0f;
-
-            Console.WriteLine($"Sensor Value: {outputValue}");
-
-            if (Console.KeyAvailable)
-            {
-                byte g = (byte)Console.Read();
-            }
-
-            if (tempSensor >= highTemp)
-            {
-                SimulateDigitalWrite(fanPin, 1);
-                SimulateAnalogWrite(HTLedPin, (sensorVal - 720) / 10);
-                SimulateAnalogWrite(heaterPin, 0);
-                SimulateAnalogWrite(LTLedPin, 0);
-                SimulateDigitalWrite(motorPin1, 1);
-                SimulateDigitalWrite(motorPin2, 0);
-            }
-            else if (tempSensor >= lowTemp)
-            {
-                SimulateDigitalWrite(fanPin, 0);
-                SimulateAnalogWrite(HTLedPin, 0);
-                SimulateAnalogWrite(heaterPin, 0);
-                SimulateAnalogWrite(LTLedPin, sensorVal / 4);
-                SimulateDigitalWrite(motorPin1, 0);
-                SimulateDigitalWrite(motorPin2, 1);
-            }
-            else
-            {
-                SimulateDigitalWrite(fanPin, 0);
-                SimulateAnalogWrite(HTLedPin, 0);
-                SimulateAnalogWrite(heaterPin, 255);
-                SimulateAnalogWrite(LTLedPin, 0);
-                SimulateDigitalWrite(motorPin1, 0);
-                SimulateDigitalWrite(motorPin2, 0);
-            }
-
-            Thread.Sleep(1000); // Simulating delay(1000)
-        }
-    }
-
-    static int SimulateAnalogRead()
-    {
-        // Simulate analogRead() functionality
-        Random random = new Random();
-        return random.Next(0, 1024);
-    }
-
-    static void SimulateDigitalWrite(int pin, int value)
-    {
-        Console.WriteLine($"DigitalWrite Pin {pin}, Value {value}");
-        // Simulate digitalWrite() functionality
-    }
-
-    static void SimulateAnalogWrite(int pin, int value)
-    {
-        Console.WriteLine($"AnalogWrite Pin {pin}, Value {value}");
-        // Simulate analogWrite() functionality
-    }
-
-    static int Map(int value, int fromLow, int fromHigh, int toLow, int toHigh)
-    {
-        return (value - fromLow) * (toHigh - toLow) / (fromHigh - fromLow) + toLow; 
 
   ADC_Init();
     Dio_SetPinDirection(BUTTON_DDR, BUTTON_CH, 0);
@@ -250,4 +144,141 @@ void init() {
   //initializing timer 1 as a counter
   TCCR1B |= (1 << CS11) | (1 << CS10);
   TCNT1 = 0;
+} #define fanpin     3 //pin 3 in PORTD
+#define HTLedPin   6 //PIN 6 IN PORTD
+#define LTLedPin   11 //pin 3 in PORTB
+#define heaterPin  4 //pin 4 in PORTD
+#define sensorPin  0 //pin 0 in PORTC
+#define motorPin1  7 //pin 7 in PORTD
+#define motorPin2  0 //PIN0 IN PORTB 
+#include "common_macros.h"
+
+
+
+int highTemp = 20;
+int lowTemp = 9;
+
+
+
+int main()
+{
+IO_init(); //initilization of input_outputPins
+ADC_init(); //initilization of ADC
+Serial.begin(9600); // set data bit comunicate serial monitor
+
+
+  while(1)
+{
+unsigned short sensorVal=ADC_readChannel() ; //read the value of the sensor through A0
+Serial.println(sensorVal);
+char outputValue = map(sensorVal, 0, 1023, 0, 255); // temparture voltage from 8 to 10 bit
+  float sensorVolt = sensorVal * 4.99 / 1024; //arduino voltage 
+  float tempSensor = sensorVolt * 25.0 / 5.0;
+  int tempInt = tempSensor * 10;
+  Serial.write(outputValue); //sending temperature to the other arduino to present on LCD
+
+  if (Serial.available()) {
+    char g = Serial.read(); // comunication between computer and arduino 
+    }
+
+    if (tempSensor > highTemp) {
+    SET_BIT(PORTD, fanpin);           //Start the fan 
+    Timer0_PWM_Init((sensorVal-720)/10 );   //PWM on HTledpin to change brightness
+    CLEAR_BIT(PORTD, heaterPin);   //shutdown the heater 
+    Timer2_PWM_Init(0); //shutdown LTledpin 
+    SET_BIT(PORTD,motorPin1);  
+    CLEAR_BIT(PORTB,motorPin2);
+  } else if (tempSensor < lowTemp) {
+    CLEAR_BIT(PORTD, fanpin); //Stop the fan 
+    Timer0_PWM_Init(0); //Shutdown HTledpin 
+    CLEAR_BIT(PORTD, heaterPin); //shutdown the heater 
+    Timer2_PWM_Init((sensorVal/4)); //PWM on LTledpin 
+    CLEAR_BIT(PORTD,motorPin1);  
+    SET_BIT(PORTB,motorPin2);
+  } else {
+    CLEAR_BIT(PORTD, fanpin); //Stop the fan 
+    Timer0_PWM_Init(0); //Shutdown HTledpin 
+    SET_BIT(PORTD, heaterPin); //Turn on the heater 
+    Timer2_PWM_Init(0); //shutdown LTledpin 
+    CLEAR_BIT(PORTD,motorPin1);  
+    CLEAR_BIT(PORTB,motorPin2);
+
+  }
+  
+
+
 }
+
+return 0;
+}
+
+void IO_init()
+{
+  SET_BIT(DDRD,fanpin);    //fan pin as output
+  SET_BIT(DDRD,HTLedPin);  //HTLedPin as output
+  SET_BIT(DDRB,LTLedPin);  //HTLedPin as output
+  SET_BIT(DDRD,heaterPin); //HeaterPin as output
+  SET_BIT(DDRD,motorPin1);  //motorPin1 as output
+  SET_BIT(DDRB,motorPin2);  //motorPin2 as output
+  CLEAR_BIT(DDRC,sensorPin);  //SensorPin as input
+}
+
+void ADC_init()
+{
+  SET_BIT(ADMUX,REFS0); //AVCC WITH EXTERNAL CAPACITOR AT AFREF
+	CLEAR_BIT(ADMUX,REFS1); //AVCC WITH EXTERNAL CAPACITOR AT AFREF
+	CLEAR_BIT(ADMUX,ADLAR); //right adjust
+	SET_BIT(ADCSRA,ADEN); //Enable the ADC
+	SET_BIT(ADCSRA,ADPS2); //F/128
+	SET_BIT(ADCSRA,ADPS1); //F/128
+	SET_BIT(ADCSRA,ADPS0); //F/128
+}
+
+unsigned short ADC_readChannel() //This for ADC0 only
+{
+	SET_BIT(ADCSRA,ADSC); //start conversion
+	while(!(GET_BIT(ADCSRA,ADIF))) //wait until the conversion is done
+	{
+	}
+	CLEAR_BIT(ADCSRA,ADIF); //CLEAR THE FLAG
+	return ADC;
+
+}
+
+void Timer0_PWM_Init(unsigned char set_duty_cycle)
+{
+	TCNT0 = 0; // Set Timer Initial Value to 0
+
+	OCR0A  = set_duty_cycle; //Set Compare value
+
+	DDRD  = DDRD | (1<<PD6); // Configure PB3/OC0 as output pin --> pin where the PWM signal is generated from MC
+
+	/* Configure timer control register
+	 * 1. Fast PWM mode FOC0=0
+	 * 2. Fast PWM Mode WGM01=1 & WGM00=1
+	 * 3. Clear OC0 when match occurs (non inverted mode) COM0A=0 & COM0A1=1
+	 * 4. clock = F_CPU/8 CS00=0 CS01=1 CS02=0
+	 */
+	TCCR0A = (1<<WGM00) | (1<<WGM01) | (1<<COM0A1) ;
+  TCCR0B = (1<<CS01);
+}
+
+void Timer2_PWM_Init(unsigned char set_duty_cycle)
+{
+	TCNT2 = 0; // Set Timer Initial Value to 0
+
+	OCR2A  = set_duty_cycle; //Set Compare value
+
+	DDRB  = DDRB | (1<<PB3); // Configure PB3/OC2A as output pin --> pin where the PWM signal is generated from MC
+
+	/* Configure timer control register
+	 * 1. Fast PWM mode FOC0=0
+	 * 2. Fast PWM Mode WGM01=1 & WGM00=1
+	 * 3. Clear OC0 when match occurs (non inverted mode) COM00=0 & COM01=1
+	 * 4. clock = F_CPU/8 CS00=0 CS01=1 CS02=0
+	 */
+	TCCR2A = (1<<WGM20) | (1<<WGM21) | (1<<COM2A1) ;
+  TCCR2B = (1<<CS21); // power width modulation parameters 
+}
+
+
